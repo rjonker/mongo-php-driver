@@ -426,6 +426,7 @@ static rs_monitor* initialize_new_monitor(mongo_link *link TSRMLS_DC) {
   rs_container *container;
   rs_monitor *monitor;
   mongo_server *current;
+  int connected_count = 0;
 
   monitor = (rs_monitor*)pemalloc(sizeof(rs_monitor), 1);
   memset(monitor, 0, sizeof(rs_monitor));
@@ -446,6 +447,7 @@ static rs_monitor* initialize_new_monitor(mongo_link *link TSRMLS_DC) {
     r_server = (rsm_server*)pemalloc(sizeof(rsm_server), 1);
     r_server->next = 0;
     r_server->server = mongo_util_server_copy(current, 0, PERSIST TSRMLS_CC);
+	connected_count += r_server->server->connected;
 
     if (monitor->servers) {
       r_server->next = monitor->servers;
@@ -461,10 +463,13 @@ static rs_monitor* initialize_new_monitor(mongo_link *link TSRMLS_DC) {
   if (container) {
     container->owner = 1;
   }
+  
+	if (connected_count) {
+		mongo_util_rs__ping(monitor TSRMLS_CC);
 
-  mongo_util_rs__ping(monitor TSRMLS_CC);
-
-  return monitor;
+		return monitor;
+	}
+	return NULL;
 }
 
 void mongo_util_rs_shutdown(zend_rsrc_list_entry *rsrc TSRMLS_DC) {
