@@ -45,7 +45,6 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
   struct sockaddr_in si;
   socklen_t sn;
   int family;
-  struct timeval tval;
   int connected = FAILURE, status = FAILURE;
 
 #ifdef WIN32
@@ -102,10 +101,6 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
   }
 #endif
 
-  // timeout: set in ms or default of 20
-  tval.tv_sec = timeout <= 0 ? 20 : timeout / 1000;
-  tval.tv_usec = timeout <= 0 ? 0 : (timeout % 1000) * 1000;
-
   // get addresses
   if (mongo_util_connect__sockaddr(sa, family, server->host, server->port, errmsg) == FAILURE) {
     mongo_util_disconnect(server);
@@ -139,8 +134,13 @@ int mongo_util_connect(mongo_server *server, int timeout, zval *errmsg) {
       return FAILURE;
     }
 
-    while (1) {
-      fd_set rset, wset, eset;
+		while (1) {
+			fd_set rset, wset, eset;
+			struct timeval tval;
+
+			// timeout: set in ms or default of 20
+			tval.tv_sec = timeout <= 0 ? 20 : timeout / 1000;
+			tval.tv_usec = timeout <= 0 ? 0 : (timeout % 1000) * 1000;
 
       FD_ZERO(&rset);
       FD_SET(server->socket, &rset);
