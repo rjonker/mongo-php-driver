@@ -169,7 +169,7 @@ static void php_mongo_link_free(void *object TSRMLS_DC) {
     }
   }
 
-  php_mongo_server_set_free(link->server_set TSRMLS_CC);
+//  php_mongo_server_set_free(link->server_set TSRMLS_CC);
 
   if (link->username) efree(link->username);
   if (link->password) efree(link->password);
